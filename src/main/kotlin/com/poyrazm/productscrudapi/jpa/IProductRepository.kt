@@ -5,4 +5,6 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface IProductRepository : CrudRepository<Product, Long>
+interface IProductRepository : CrudRepository<Product, Long> {
+    fun existsProductByProductName(productName: String): Boolean
+}
