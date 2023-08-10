@@ -9,8 +9,3 @@ interface IApiErrorResponse {
     val message: String?
     val statusCode: Int?
 }
-
-
-
-
-
