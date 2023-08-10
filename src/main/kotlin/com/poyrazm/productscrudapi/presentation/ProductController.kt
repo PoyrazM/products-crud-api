@@ -3,8 +3,8 @@ package com.poyrazm.productscrudapi.presentation
 import com.poyrazm.productscrudapi.business.service.IProductService
 import com.poyrazm.productscrudapi.dto.request.ProductRequest
 import com.poyrazm.productscrudapi.dto.response.ProductResponse
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
+import jakarta.validation.Valid
+import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*
 class ProductController(private val productService : IProductService) {
 
     @PostMapping
-    fun createProduct(@RequestBody req : ProductRequest) : ResponseEntity<ProductResponse> {
+    fun createProduct(@Valid @RequestBody req: ProductRequest): ResponseEntity<ProductResponse> {
         val savedProduct = productService.createProduct(req)
         return ResponseEntity(savedProduct, HttpStatus.CREATED)
     }
@@ -30,7 +30,10 @@ class ProductController(private val productService : IProductService) {
     }
 
     @PutMapping("/{productId}")
-    fun updateProduct(@PathVariable productId : Long, @RequestBody req : ProductRequest) : ResponseEntity<ProductResponse> {
+    fun updateProduct(
+        @PathVariable productId: Long,
+        @Valid @RequestBody req: ProductRequest
+    ): ResponseEntity<ProductResponse> {
         val updatedProduct = productService.updateProductById(productId, req)
         return ResponseEntity.ok(updatedProduct)
     }
