@@ -6,7 +6,9 @@ import com.poyrazm.productscrudapi.dto.response.ProductResponse
 import com.poyrazm.productscrudapi.entity.Product
 import com.poyrazm.productscrudapi.exception.enum.ProductExceptionTypes
 import com.poyrazm.productscrudapi.exception.exceptions.ProductNotCreatedException
+import com.poyrazm.productscrudapi.exception.exceptions.ProductNotDeletedException
 import com.poyrazm.productscrudapi.exception.exceptions.ProductNotFoundException
+import com.poyrazm.productscrudapi.exception.exceptions.ProductNotUpdatedException
 import com.poyrazm.productscrudapi.jpa.IProductRepository
 import com.poyrazm.productscrudapi.mapper.ProductMapper
 import org.springframework.stereotype.Service
@@ -30,42 +32,40 @@ class ProductServiceImpl(
     override fun getAllProducts(): List<ProductResponse> {
         val allProducts = productRepository.findAll().toList()
 
-        val isAllProductsNotEmpty = allProducts.isEmpty().not()
+        val isNotAllProductsEmpty = allProducts.isEmpty().not()
 
-        if (isAllProductsNotEmpty) return mapper.entityListToResponseList(allProducts)
+        if (isNotAllProductsEmpty) return mapper.entityListToResponseList(allProducts)
         else throw ProductNotFoundException(ProductExceptionTypes.PRODUCTS_NOT_FOUND.getValue())
     }
 
     override fun receiveProductById(productId: Long): ProductResponse {
         val validProduct = findById(productId).orElseThrow {
-            throw ProductNotFoundException(ProductExceptionTypes.PRODUCT_NOT_FOUND.getValue())
+            throw ProductNotFoundException(ProductExceptionTypes.PRODUCT_NOT_FOUND.getValue() + productId)
         }
 
         return mapper.entityToResponse(validProduct)
     }
 
     override fun updateProductById(productId: Long, request: ProductRequest): ProductResponse {
-        val validProduct =
-            findById(productId).orElseThrow { throw ProductNotFoundException(ProductExceptionTypes.PRODUCT_NOT_FOUND.getValue()) }
+        val validProduct = findById(productId)
 
-        try {
-            mapper.updateRequestToEntity(request, validProduct)
-            productRepository.save(validProduct)
-            return mapper.entityToResponse(validProduct)
-        } catch (exception : Exception) {
-            throw RuntimeException("Product Could Not Be Updated !")
-        }
+        val isProductPresent = validProduct.isPresent
+
+        if (isProductPresent) {
+            val updatedProduct = validProduct.get()
+            mapper.updateRequestToEntity(request, updatedProduct)
+            productRepository.save(updatedProduct)
+            return mapper.entityToResponse(updatedProduct)
+        } else throw ProductNotUpdatedException(ProductExceptionTypes.PRODUCT_NOT_UPDATED.getValue())
     }
 
     override fun deleteProductById(productId: Long) {
-        val validProduct =
-            findById(productId).orElseThrow { throw ProductNotFoundException(ProductExceptionTypes.PRODUCT_NOT_FOUND.getValue()) }
+        val validProduct = findById(productId)
 
-        try {
-            productRepository.delete(validProduct)
-        } catch (exception : Exception) {
-            throw RuntimeException("Product Could Not Be Deleted !")
-        }
+        val isProductPresent = validProduct.isPresent
+
+        if (isProductPresent) productRepository.delete(validProduct.get())
+        else throw ProductNotDeletedException(ProductExceptionTypes.PRODUCT_NOT_DELETED.getValue())
     }
 
     private fun findById(productId: Long) : Optional<Product> {
